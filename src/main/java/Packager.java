@@ -50,8 +50,7 @@ public class Packager {
     /* 为各元素绑定事件监听器 */
         buttonBrowseSource.addActionListener(new BrowseAction()); // 为源文件浏览按钮绑定监听器，点击该按钮调用文件选择窗口
         buttonBrowseTarget.addActionListener(new BrowseAction()); // 为目标位置浏览按钮绑定监听器，点击该按钮调用文件选择窗口
-//        button.addActionListener(new DecryptAction());
-//        sourcefile.getDocument().addDocumentListener(new TextFieldAction());
+        button.addActionListener(new PackageAction());
         sourcefile.setEditable(false);// 设置源文件文本域不可手动修改
         targetfile.setEditable(false);// 设置目标位置文本域不可手动修改
         container.add(label1);

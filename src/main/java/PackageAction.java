@@ -1,3 +1,4 @@
+import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.*;
@@ -316,8 +317,8 @@ public class PackageAction implements ActionListener {
 //                        jar(tempDir, new File(tempDir.getAbsolutePath() + ".jar"));
 
                         Runtime rt = Runtime.getRuntime();
-                        System.out.println("cmd /c jar cvfm0 " + tempDir.getAbsolutePath() + ".jar " + tempDir.getAbsolutePath()
-                                + "/META-INF/MANIFEST.MF -C " + tempDir.getAbsolutePath() + "/ .");
+//                        System.out.println("cmd /c jar cvfm0 " + tempDir.getAbsolutePath() + ".jar " + tempDir.getAbsolutePath()
+//                                + "/META-INF/MANIFEST.MF -C " + tempDir.getAbsolutePath() + "/ .");
 
                         Process p = null;
                         try {
@@ -365,7 +366,7 @@ public class PackageAction implements ActionListener {
         while (desDir.exists()){
             deleteDirectory(desDir);
         }
-
+        JOptionPane.showConfirmDialog(null, "class文件已增量发布成功", "成功", JOptionPane.YES_NO_OPTION);
     }
 
     /**
