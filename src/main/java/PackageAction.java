@@ -2,9 +2,7 @@ import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.*;
-import java.util.Enumeration;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 import java.util.zip.ZipEntry;
@@ -22,7 +20,7 @@ public class PackageAction implements ActionListener {
      * @param fileName
      * @return
      */
-    public  String getPackage(String fileName) {
+    public String getPackage(String fileName) {
         DataInputStream in = null;
 
         try {
@@ -127,7 +125,7 @@ public class PackageAction implements ActionListener {
      * @param path
      * @return
      */
-    public  String getJarName(String path) {
+    public String getJarName(String path) {
         int leftIndex = path.lastIndexOf("\\");
         int rightIndex = path.lastIndexOf(".");
         return path.substring(leftIndex + 1, rightIndex);
@@ -141,7 +139,7 @@ public class PackageAction implements ActionListener {
      * @throws FileNotFoundException
      * @throws IOException
      */
-    public  void unJar(File src, File desDir) throws FileNotFoundException, IOException {
+    public void unJar(File src, File desDir) throws FileNotFoundException, IOException {
         JarFile jarFile = new JarFile(src);
         Enumeration<JarEntry> jarEntrys = jarFile.entries();
         if (!desDir.exists()) desDir.mkdirs(); //建立用户指定存放的目录
@@ -180,7 +178,7 @@ public class PackageAction implements ActionListener {
      * @param oldPath
      * @param desDir
      */
-    public  boolean copy(String oldPath, String desDir) {
+    public boolean copy(String oldPath, String desDir) {
         try {
             int byteread = 0;
             File oldfile = new File(oldPath);
@@ -206,7 +204,7 @@ public class PackageAction implements ActionListener {
      *
      * @param targetFile
      */
-    public  void deleteFile(File targetFile) {
+    public void deleteFile(File targetFile) {
         // 路径为文件且不为空则进行删除
         if (targetFile.isFile() && targetFile.exists()) {
             targetFile.delete();
@@ -218,7 +216,7 @@ public class PackageAction implements ActionListener {
      *
      * @param targetFile
      */
-    public  void deleteDirectory(File targetFile) {
+    public void deleteDirectory(File targetFile) {
         //如果dir对应的文件不存在，或者不是一个目录，则退出
         if (targetFile.exists() && targetFile.isDirectory()) {
             //删除文件夹下的所有文件(包括子目录)
@@ -239,87 +237,85 @@ public class PackageAction implements ActionListener {
 
     public void actionPerformed(ActionEvent e) {
         String jarPath = Packager.sourcefile.getText();
-        String classPath = Packager.targetfile.getText();
-//        String classPath = "G:\\test\\\\SettlementDiscountUploadListener.class";
-        JarFile jarFile = null;
-        try {
-            jarFile = new JarFile(jarPath);
-        } catch (IOException e1) {
-            e1.printStackTrace();
-        }
-        String jarName = getJarName(jarFile.getName());
-
-//        System.out.println(jarName);
-
-        // 解压jar包到项目当前工作路径
-        String workDir = new File("").getAbsolutePath(); // 当前工作路径
-        File src = new File(jarPath);
-        File desDir = new File(workDir + File.separator + jarName);
-//        System.out.println(desDir.getAbsolutePath());
-        try {
-            unJar(src, desDir);
-        } catch (IOException e1) {
-            e1.printStackTrace();
-        }
-
-        String className = getPackage(classPath);
-//        System.out.println(className);
-//        System.out.println(className.substring(0,className.lastIndexOf("/")));
-        Enumeration<JarEntry> entrys = jarFile.entries();
-        while (entrys.hasMoreElements()) {
-            JarEntry jarEntry = entrys.nextElement();
-//            System.out.println(jarEntry.getName());
-            if (jarEntry.getName().equals("BOOT-INF/classes/" + className + ".class")){
-//                System.out.println(jarEntry.getName());
-//                System.out.println("BOOT-INF/classes/" + className + ".class");
-//                System.out.println(desDir.getAbsolutePath() + "\\BOOT-INF\\classes\\"
-//                        + className.replace("/", "\\") + ".class");
-                if (copy(classPath, desDir.getAbsolutePath() + "\\BOOT-INF\\classes\\"
-                        + className.replace("/", "\\") + ".class")){
-                    System.out.println("复制成功！");
-                    break;
-                }
+        if (!jarPath.endsWith(".jar") || BrowseAction.classFileChooser.getSelectedFiles().length == 0) {
+            JOptionPane.showConfirmDialog(null, "出错！请重新选择文件", "错误", JOptionPane.YES_OPTION);
+        } else {
+            JarFile jarFile = null;
+            try {
+                jarFile = new JarFile(jarPath);
+            } catch (IOException e1) {
+                e1.printStackTrace();
             }
-            else if (jarEntry.getName().endsWith(".jar")) {
-                JarFile nextJarFile = null;
-                try {
-                    nextJarFile = new JarFile(workDir + File.separator + jarName + File.separator
-                            + jarEntry.getName());
-                } catch (IOException e1) {
-                    e1.printStackTrace();
-                }
-//                System.out.println(workDir + File.separator + jarName + File.separator
-//                        + jarEntry.getName());
-//                System.out.println(getJarName(nextJarFile.getName()));
-                Enumeration<JarEntry> nextEntrys = nextJarFile.entries();
-                while (nextEntrys.hasMoreElements()) {
-                    JarEntry temp = nextEntrys.nextElement();
-//                    System.out.println(temp.getName());
-                    if (temp.getName().equals(className + ".class")){
-                        File nextFile = new File(workDir + File.separator + jarName + File.separator
+            String jarName = getJarName(jarFile.getName());
+
+//            System.out.println(jarName);
+
+            // 解压jar包到项目当前工作路径
+            String workDir = new File("").getAbsolutePath(); // 当前工作路径
+            File src = new File(jarPath);
+            File desDir = new File(workDir + File.separator + jarName);
+
+            try {
+                unJar(src, desDir);
+            } catch (IOException e1) {
+                e1.printStackTrace();
+            }
+
+            List<File> classList = new LinkedList<File>();
+            classList.addAll(Arrays.asList(BrowseAction.classFileChooser.getSelectedFiles()));
+
+
+            Enumeration<JarEntry> entrys = jarFile.entries();
+            while (entrys.hasMoreElements()) {
+
+                if (classList.size() == 0) break;
+
+
+                JarEntry jarEntry = entrys.nextElement();
+                if (jarEntry.getName().endsWith(".jar")) {
+                    JarFile nextJarFile = null;
+
+                    try {
+                        nextJarFile = new JarFile(workDir + File.separator + jarName + File.separator
                                 + jarEntry.getName());
-//                        System.out.println(temp.getName());
-                        String tempName = getJarName(nextJarFile.getName());
-//                        System.out.println(tempName);
-                        File tempDir = new File(nextFile.getParent() + File.separator + tempName);
-                        try {
-                            unJar(nextFile, tempDir);
-                        } catch (IOException e1) {
-                            e1.printStackTrace();
-                        }
-//                        System.out.println(tempDir.getAbsolutePath());
-//                        System.out.println(tempDir.getAbsolutePath() + File.separator
-//                                + className.replace("/", "\\") + ".class");
-                        if (copy(classPath, tempDir.getAbsolutePath() + File.separator
-                                + className.replace("/", "\\") + ".class")){
-                            System.out.println("复制成功！");
-                        }
-//                        jar(tempDir, new File(tempDir.getAbsolutePath() + ".jar"));
+                    } catch (IOException e1) {
+                        e1.printStackTrace();
+                    }
+                    Enumeration<JarEntry> nextEntrys = nextJarFile.entries();
+                    // 遍历前环境准备
+                    File nextFile = new File(workDir + File.separator + jarName + File.separator
+                            + jarEntry.getName());
+                    String tempName = getJarName(nextJarFile.getName());
+                    File tempDir = new File(nextFile.getParent() + File.separator + tempName);
 
+                    while (nextEntrys.hasMoreElements()) {
+                        JarEntry temp = nextEntrys.nextElement();
+                        if (classList.size() == 0) break;
+
+                        for (int i = 0; i < classList.size(); i++) {
+                            String className = getPackage(classList.get(i).getAbsolutePath());
+                            if (temp.getName().equals(className + ".class")) {
+
+                                // 如果jar包为名的文件夹不存在，则解压jar包
+                                if (!tempDir.exists()) {
+                                    try {
+                                        unJar(nextFile, tempDir);
+                                    } catch (IOException e1) {
+                                        e1.printStackTrace();
+                                    }
+                                }
+
+
+                                if (copy(classList.get(i).getAbsolutePath(), tempDir.getAbsolutePath() + File.separator
+                                        + className.replace("/", "\\") + ".class")) {
+                                    classList.remove(i);
+                                    System.out.println("复制成功！");
+                                }
+                            }
+                        }
+                    }
+                    if (tempDir.exists()) {
                         Runtime rt = Runtime.getRuntime();
-//                        System.out.println("cmd /c jar cvfm0 " + tempDir.getAbsolutePath() + ".jar " + tempDir.getAbsolutePath()
-//                                + "/META-INF/MANIFEST.MF -C " + tempDir.getAbsolutePath() + "/ .");
-
                         Process p = null;
                         try {
                             p = rt.exec("cmd /c jar cvfm0 " + tempDir.getAbsolutePath() + ".jar " + tempDir.getAbsolutePath()
@@ -338,41 +334,123 @@ public class PackageAction implements ActionListener {
                         }
 
                         System.out.println("打包完成");
-                        while (tempDir.exists()){
+                        while (tempDir.exists()) {
                             deleteDirectory(tempDir);
                         }
-                        break;
+                    }
+                } else if (jarEntry.getName().endsWith(".class")) {
+                    for (int i = 0; i < classList.size(); i++) {
+                        String className = getPackage(classList.get(i).getAbsolutePath());
+                        if (jarEntry.getName().equals("BOOT-INF/classes/" + className + ".class")) {
+                            if (copy(classList.get(i).getAbsolutePath(), desDir.getAbsolutePath() + "\\BOOT-INF\\classes\\"
+                                    + className.replace("/", "\\") + ".class")) {
+                                classList.remove(i);
+                                break;
+                            }
+                        }
                     }
                 }
+//                for (int i = 0; i < classList.size(); i++) {
+//                    String className = getPackage(classList.get(i).getAbsolutePath());
+//                    if (jarEntry.getName().equals("BOOT-INF/classes/" + className + ".class")) {
+//                        if (copy(classList.get(i).getAbsolutePath(), desDir.getAbsolutePath() + "\\BOOT-INF\\classes\\"
+//                                + className.replace("/", "\\") + ".class")) {
+//                            classList.remove(i);
+////                           flag = true;
+//                            break;
+//                        }
+//                    } else if (jarEntry.getName().endsWith(".jar")) {
+//                        JarFile nextJarFile = null;
+//                        try {
+//                            nextJarFile = new JarFile(workDir + File.separator + jarName + File.separator
+//                                    + jarEntry.getName());
+//                        } catch (IOException e1) {
+//                            e1.printStackTrace();
+//                        }
+//                        Enumeration<JarEntry> nextEntrys = nextJarFile.entries();
+//                        while (nextEntrys.hasMoreElements()) {
+//                            JarEntry temp = nextEntrys.nextElement();
+//                            if (temp.getName().equals(className + ".class")) {
+//                                File nextFile = new File(workDir + File.separator + jarName + File.separator
+//                                        + jarEntry.getName());
+//                                String tempName = getJarName(nextJarFile.getName());
+//                                File tempDir = new File(nextFile.getParent() + File.separator + tempName);
+//                                try {
+//                                    unJar(nextFile, tempDir);
+//                                } catch (IOException e1) {
+//                                    e1.printStackTrace();
+//                                }
+////                        System.out.println(tempDir.getAbsolutePath());
+////                        System.out.println(tempDir.getAbsolutePath() + File.separator
+////                                + className.replace("/", "\\") + ".class");
+//                                if (copy(classPath, tempDir.getAbsolutePath() + File.separator
+//                                        + className.replace("/", "\\") + ".class")) {
+//                                    System.out.println("复制成功！");
+//                                }
+////                        jar(tempDir, new File(tempDir.getAbsolutePath() + ".jar"));
+//
+//                                Runtime rt = Runtime.getRuntime();
+////                        System.out.println("cmd /c jar cvfm0 " + tempDir.getAbsolutePath() + ".jar " + tempDir.getAbsolutePath()
+////                                + "/META-INF/MANIFEST.MF -C " + tempDir.getAbsolutePath() + "/ .");
+//
+//                                Process p = null;
+//                                try {
+//                                    p = rt.exec("cmd /c jar cvfm0 " + tempDir.getAbsolutePath() + ".jar " + tempDir.getAbsolutePath()
+//                                            + "/META-INF/MANIFEST.MF -C " + tempDir.getAbsolutePath() + "/ .");
+//                                } catch (IOException e1) {
+//                                    e1.printStackTrace();
+//                                }
+//                                InputStream inputStream1 = p.getInputStream();
+//                                InputStream inputStream2 = p.getErrorStream();
+//                                cleanThread(inputStream1);
+//                                cleanThread(inputStream2);
+//                                try {
+//                                    p.waitFor();
+//                                } catch (InterruptedException e1) {
+//                                    e1.printStackTrace();
+//                                }
+//
+//                                System.out.println("打包完成");
+//                                while (tempDir.exists()) {
+//                                    deleteDirectory(tempDir);
+//                                }
+//                                break;
+//                            }
+//                        }
+//                    }
+//                }
+
             }
+            Runtime runtime = Runtime.getRuntime();
+            Process process = null;
+            try {
+                process = runtime.exec("cmd /c jar cvfm0 " + jarName
+                        + ".jar " + jarName + "/META-INF/MANIFEST.MF -C " + jarName + "/ .");
+            } catch (IOException e1) {
+                e1.printStackTrace();
+            }
+            final InputStream is1 = process.getInputStream();
+            final InputStream is2 = process.getErrorStream();
+            cleanThread(is1);
+            cleanThread(is2);
+            try {
+                process.waitFor();
+            } catch (InterruptedException e1) {
+                e1.printStackTrace();
+            }
+            while (desDir.exists()) {
+                deleteDirectory(desDir);
+            }
+            JOptionPane.showConfirmDialog(null, "class文件已增量发布成功", "成功", JOptionPane.YES_OPTION);
         }
-        Runtime runtime = Runtime.getRuntime();
-        Process process = null;
-        try {
-            process = runtime.exec("cmd /c jar cvfm0 " + jarName
-                    + ".jar " + jarName + "/META-INF/MANIFEST.MF -C " + jarName + "/ .");
-        } catch (IOException e1) {
-            e1.printStackTrace();
-        }
-        final InputStream is1 = process.getInputStream();
-        final InputStream is2 = process.getErrorStream();
-        cleanThread(is1);
-        cleanThread(is2);
-        try {
-            process.waitFor();
-        } catch (InterruptedException e1) {
-            e1.printStackTrace();
-        }
-        while (desDir.exists()){
-            deleteDirectory(desDir);
-        }
-        JOptionPane.showConfirmDialog(null, "class文件已增量发布成功", "成功", JOptionPane.YES_NO_OPTION);
     }
 
     /**
      * 清除开启子线程调用jar命令的输入流和错误流，防止阻塞
+     *
      * @param inputStream
      */
+
     public void cleanThread(final InputStream inputStream) {
         new Thread() {
             @Override

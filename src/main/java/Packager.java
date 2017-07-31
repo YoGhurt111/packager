@@ -1,8 +1,6 @@
 
 
-import org.apache.commons.compress.archivers.jar.JarArchiveEntry;
-import org.apache.commons.compress.archivers.jar.JarArchiveOutputStream;
-import org.apache.commons.compress.utils.IOUtils;
+
 
 
 import javax.swing.*;
@@ -19,15 +17,14 @@ public class Packager {
 
     private final static int MAGIC = 0xCAFEBABE;
     /* 主窗体里面的若干元素 */
-    private JFrame mainForm = new JFrame("增量发布小工具"); // 主窗体
-    private JLabel label1 = new JLabel("请选择待替换Jar包：");
-    private JLabel label2 = new JLabel("请选择需要替换的class文件：");
+    private static JFrame mainForm = new JFrame("增量发布小工具"); // 主窗体
+    private static JLabel label1 = new JLabel("请选择待替换Jar包：");
+    private static JLabel label2 = new JLabel("请选择需要替换的class文件：");
     static JTextField sourcefile = new JTextField(); // 选择待替换Jar包
     static JTextField targetfile = new JTextField(); // 选择需要替换的class文件
     static JButton buttonBrowseSource = new JButton("浏览"); // 浏览按钮
     static JButton buttonBrowseTarget = new JButton("浏览"); // 浏览按钮
     static JButton button = new JButton("开始替换"); // 加密按钮
-    static JDialog jDialog = new JDialog();
 
 
     public Packager(){
@@ -60,64 +57,21 @@ public class Packager {
         container.add(buttonBrowseSource);
         container.add(buttonBrowseTarget);
         container.add(button);
+        mainForm.repaint();
     }
 
 
 
-    public static void jar(File srcFile, File destFile){
-        JarArchiveOutputStream outputStream = null;
-        InputStream inputStream = null;
-        try {
-            inputStream = new BufferedInputStream(new FileInputStream(srcFile) );
-            outputStream = new JarArchiveOutputStream(new BufferedOutputStream(new FileOutputStream(destFile)));
-            JarArchiveEntry entry = new JarArchiveEntry(srcFile.getName());
-            entry.setSize(srcFile.length());
-            outputStream.putArchiveEntry(entry);
-            IOUtils.copy(inputStream, outputStream);
-            outputStream.closeArchiveEntry();
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }finally {
-            IOUtils.closeQuietly(inputStream);
-            IOUtils.closeQuietly(outputStream);
-        }
 
-    }
 
 
 
     public static void main(String[] args) throws Exception {
         new Packager();
+
     }
 
-    /**
-     * 清除开启子线程调用jar命令的输入流和错误流，防止阻塞
-     * @param inputStream
-     */
-    public static void cleanThread(final InputStream inputStream) {
-        new Thread() {
-            @Override
-            public void run() {
-                BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(inputStream));
-                String line = null;
-                try {
-                    while ((line = bufferedReader.readLine()) != null) {
-//                        System.out.println(line);
-                    }
-                } catch (IOException e) {
-                    e.printStackTrace();
-                } finally {
-                    try {
-                        inputStream.close();
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                    }
-                }
-            }
-        }.start();
-    }
+
 
 
 }
